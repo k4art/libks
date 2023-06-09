@@ -6,13 +6,12 @@
 
 #include "ks.h"
 
-#define RX_BUFFER_SIZE 1024
+#define RX_BUFFER_SIZE 1023
 
 typedef struct
 {
   ks_tcp_conn_t tcp;
-  size_t        rx_offset;
-  char          rx_buffer[RX_BUFFER_SIZE];
+  char          rx_buffer[RX_BUFFER_SIZE + 1];
 } user_conn_t;
 
 static ks_tcp_acceptor_t * m_acceptor;
@@ -21,8 +20,7 @@ static user_conn_t       * m_conns[2048]; // maps: FD -> user_conn_t *
 static void on_read_cb(int result, void * user_data);
 
 static void convert_pings_to_pongs(char   * buffer,
-                                   size_t   buffer_len,
-                                   size_t * p_skipped_last)
+                                   size_t   buffer_len)
 {
   char * ping    = buffer;
   char * buf_end = buffer + buffer_len;
@@ -31,10 +29,6 @@ static void convert_pings_to_pongs(char   * buffer,
   {
     ping[1] = 'O'; // PING -> PONG
   }
-
-  if      (!strcmp(buf_end - 1, "P"))   *p_skipped_last = 1;
-  else if (!strcmp(buf_end - 2, "PI"))  *p_skipped_last = 2;
-  else if (!strcmp(buf_end - 3, "PIN")) *p_skipped_last = 3;
 }
 
 static void on_write_cb(int result, void * user_data)
@@ -61,8 +55,6 @@ static void on_write_cb(int result, void * user_data)
       memcpy(conn->rx_buffer, temp, skipped);
     }
 
-    conn->rx_offset = skipped;
-    
     ks_tcp_read_some(&conn->tcp,
                      conn->rx_buffer + skipped,
                      RX_BUFFER_SIZE,
@@ -83,13 +75,14 @@ static void on_read_cb(int result, void * user_data)
   }
   else
   {
-    size_t skipped, rx_length = result + conn->rx_offset;
+    size_t rx_length = result;
 
-    convert_pings_to_pongs(conn->rx_buffer, rx_length, &skipped);
+    conn->rx_buffer[rx_length] = '\0';
+    convert_pings_to_pongs(conn->rx_buffer, rx_length);
 
     ks_tcp_write(&conn->tcp,
                  conn->rx_buffer,
-                 rx_length - skipped,
+                 rx_length,
                  on_write_cb,
                  conn);
   }
@@ -113,7 +106,6 @@ static void on_accept_cb(int result, void * user_data)
     ks_tcp_conn_t * tcp_temp = user_data;
     user_conn_t   * conn     = malloc(sizeof(user_conn_t));
 
-    conn->rx_offset = 0;
     memcpy(&conn->tcp, tcp_temp, sizeof(*tcp_temp));
     
     m_conns[conn->tcp.socket.fd] = conn;

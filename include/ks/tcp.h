@@ -32,18 +32,26 @@ typedef struct
  */
 typedef struct
 {
-  ks__tcp_t socket;
+  ks__tcp_t      socket;
   ks_ipv4_addr_t addr;
 } ks_tcp_acceptor_t;
 
-ks_ret_t ks__tcp_init(ks__tcp_t * tcp, const ks_ipv4_addr_t * binding_addr);
+ks_ret_t ks__tcp_init(ks__tcp_t * tcp, int reuse_sockfd, const ks_ipv4_addr_t * binding_addr);
 ks_ret_t ks__tcp_close(ks__tcp_t * tcp);
 
+#define ks_tcp_init_reuse_socket(tcp, sockfd)                             \
+  _Generic((tcp),                                                         \
+   ks_tcp_conn_t     *: ks__tcp_init(&(tcp)->socket, sockfd, NULL),       \
+   ks_tcp_acceptor_t *: ks__tcp_init(&(tcp)->socket,                      \
+                                     sockfd,                              \
+                                     &((ks_tcp_acceptor_t *) tcp)->addr)) \
 
-#define ks_tcp_init(tcp)                                            \
-  _Generic((tcp),                                                   \
-   ks_tcp_conn_t     *: ks__tcp_init(&(tcp)->socket, NULL),         \
-   ks_tcp_acceptor_t *: ks__tcp_init(&(tcp)->socket, &(tcp)->addr)) \
+#define ks_tcp_init(tcp)                                                  \
+  _Generic((tcp),                                                         \
+   ks_tcp_conn_t     *: ks__tcp_init(&(tcp)->socket, 0, NULL),            \
+   ks_tcp_acceptor_t *: ks__tcp_init(&(tcp)->socket,                      \
+                                     0,                                   \
+                                     &((ks_tcp_acceptor_t *) tcp)->addr)) \
 
 #define ks_tcp_close(tcp)                              \
   _Generic((tcp),                                      \
@@ -55,15 +63,15 @@ ks_ret_t ks__tcp_close(ks__tcp_t * tcp);
  * @note        At most one pending accept per acceptor must be active at any time.
  *
  * @param[in]   acceptor
- * @param[out]  p_socket
+ * @param[out]  p_conn
  * @param[in]   cb
  * @param[in]   user_data
  *
- * @retval      KS_EINVAL    The acceptor is not initialized.
+ * @retval      KS_EINVAL    The acceptor or conn is not initialized.
  */
 ks_ret_t ks_tcp_accept(ks_tcp_acceptor_t * acceptor,
-                       ks_tcp_conn_t     * p_socket,
-                       ks_io_cb_t      cb,
+                       ks_tcp_conn_t     * p_conn,
+                       ks_io_cb_t          cb,
                        void              * user_data);
 
 /**
@@ -78,11 +86,11 @@ ks_ret_t ks_tcp_accept(ks_tcp_acceptor_t * acceptor,
  *
  * @retval      KS_EINVAL  The connection is not initialized.
  */
-ks_ret_t ks_tcp_read(ks_tcp_conn_t  * socket,
-                     void           * buffer,
-                     size_t           nbytes,
-                     ks_io_cb_t       cb,
-                     void           * user_data);
+ks_ret_t ks_tcp_read(ks_tcp_conn_t * socket,
+                     void          * buffer,
+                     size_t          nbytes,
+                     ks_io_cb_t      cb,
+                     void          * user_data);
 
 /**
  * @brief       Asynchronous TCP read.
@@ -97,13 +105,12 @@ ks_ret_t ks_tcp_read(ks_tcp_conn_t  * socket,
  * @retval      KS_EINVAL  The connection is not initialized.
  * 
  * @section     ex Example
- * @snippet     examples/tcp_single_echo.c ks_tcp_read_some Example
  */
-ks_ret_t ks_tcp_read_some(ks_tcp_conn_t  * conn,
-                          void           * buffer,
-                          size_t           nbytes,
-                          ks_io_cb_t       cb,
-                          void           * user_data);
+ks_ret_t ks_tcp_read_some(ks_tcp_conn_t * conn,
+                          void          * buffer,
+                          size_t          nbytes,
+                          ks_io_cb_t      cb,
+                          void          * user_data);
 
 /**
  * @brief       Asynchronous TCP write of exact size.
@@ -117,11 +124,11 @@ ks_ret_t ks_tcp_read_some(ks_tcp_conn_t  * conn,
  *
  * @retval      KS_EINVAL  The connection is not initialized.
  */
-ks_ret_t ks_tcp_write(ks_tcp_conn_t  * conn,
-                      void           * buffer,
-                      size_t           nbytes,
-                      ks_io_cb_t       cb,
-                      void           * user_data);
+ks_ret_t ks_tcp_write(ks_tcp_conn_t * conn,
+                      void          * buffer,
+                      size_t          nbytes,
+                      ks_io_cb_t      cb,
+                      void          * user_data);
 
 /**
  * @brief       Asynchronous TCP write.
@@ -135,11 +142,11 @@ ks_ret_t ks_tcp_write(ks_tcp_conn_t  * conn,
  *
  * @retval      KS_EINVAL  The connection is not initialized.
  */
-ks_ret_t ks_tcp_write_some(ks_tcp_conn_t  * conn,
-                           void           * buffer,
-                           size_t           nbytes,
-                           ks_io_cb_t       cb,
-                           void           * user_data);
-#endif 
+ks_ret_t ks_tcp_write_some(ks_tcp_conn_t * conn,
+                           void          * buffer,
+                           size_t          nbytes,
+                           ks_io_cb_t      cb,
+                           void          * user_data);
+#endif
 
 /** @} */

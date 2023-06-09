@@ -11,7 +11,7 @@ const char * ks_ret_name(ks_ret_t ret)
     KS__ERR_MAP(XX)
     #undef XX
 
-    default: return "unknown erorr";
+    default: return strerror(-ret);
   }
 
   KS_RET_CHECKED(3);

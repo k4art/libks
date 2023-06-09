@@ -5,19 +5,26 @@
 
 #include "ks.h"
 
-#define HELLO_MESSAGE "Hello"
+#define HELLO_MESSAGE "hello"
 
-static void close_tcp_io_cb(int result, void * user_data)
+static ks_tcp_acceptor_t m_acceptor;
+
+static void done_io_cb(int result, void * user_data)
 {
   ks_tcp_conn_t * tcp = user_data;
 
-  if (result != sizeof(HELLO_MESSAGE))
+  if (result != strlen(HELLO_MESSAGE))
   {
-    fprintf(stderr, "Error: message sent was impaired\n");
+    fprintf(stderr,
+            "Error: message sent was impaired (%d out of %zu)\n",
+            result,
+            strlen(HELLO_MESSAGE));
+
     exit(1);
   }
 
   ks_tcp_close(tcp);
+  ks_tcp_close(&m_acceptor);
 }
 
 static void say_hello_io_cb(int result, void * user_data)
@@ -30,24 +37,27 @@ static void say_hello_io_cb(int result, void * user_data)
     exit(1);
   }
 
-  ks_tcp_write(tcp, HELLO_MESSAGE, sizeof(HELLO_MESSAGE), close_tcp_io_cb, tcp);
+  ks_tcp_write(tcp, HELLO_MESSAGE, strlen(HELLO_MESSAGE), done_io_cb, tcp);
 }
 
 int main(void)
 {
-  ks_tcp_conn_t     single_conn;
-  ks_tcp_acceptor_t acceptor =
+  ks_tcp_conn_t single_conn;
+
+  m_acceptor = (ks_tcp_acceptor_t)
   {
     .addr.ip   = KS_IPv4(127, 0, 0, 1),
     .addr.port = 8080,
   };
 
-  ks_tcp_init(&acceptor);
-  ks_tcp_accept(&acceptor, &single_conn, say_hello_io_cb, &single_conn);
+  KS_RET_CHECKED(ks_tcp_init(&m_acceptor));
+  KS_RET_CHECKED(ks_tcp_accept(&m_acceptor,
+                               &single_conn,
+                               say_hello_io_cb,
+                               &single_conn));
 
   while (ks_run(KS_RUN_ONCE_OR_DONE) == 1)
     ;
 
-  ks_tcp_close(&acceptor);
   ks_close();
 }

@@ -78,10 +78,11 @@ static void do_hello_command(void * user_data)
 
 static void async_execute_command(char * command, user_conn_t * conn)
 {
-  ks_work_cb_t fn;
+  ks_work_cb_t fn = NULL;
+  const size_t sz = COMMAND_FIX_SIZE;
 
-  if      (!strcmp(command, COMMAND_SLEEP)) fn = &do_sleep_command;
-  else if (!strcmp(command, COMMAND_HELLO)) fn = &do_hello_command;
+  if      (!strncmp(command, COMMAND_SLEEP, sz)) fn = do_sleep_command;
+  else if (!strncmp(command, COMMAND_HELLO, sz)) fn = do_hello_command;
 
   if (fn != NULL)
   {
@@ -95,6 +96,7 @@ static void async_execute_command(char * command, user_conn_t * conn)
 
 static void on_read_cb(int read_res, void * user_data)
 {
+  printf("on_read_cb()\n");
   user_conn_t * conn = user_data;
 
   if (read_res <= 0)
@@ -110,6 +112,7 @@ static void on_read_cb(int read_res, void * user_data)
 
 static void handle_connection(user_conn_t * conn)
 {
+  printf("handle_connection()\n");
   ks_tcp_read(&conn->tcp, conn->rx_buffer, COMMAND_FIX_SIZE, on_read_cb, conn);
 }
 
@@ -120,7 +123,7 @@ static void on_accept_cb(int result, void * user_data)
 
   if (result < 0)
   {
-    fprintf(stderr, "Error: async accept failed with %s\n", strerror(errno));
+    fprintf(stderr, "Error: async accept failed with %s\n", ks_ret_name(result));
   }
   else
   {
@@ -144,6 +147,7 @@ static void launch_server(void * user_data)
     .addr.port = 8080,
   };
 
+  ks_tcp_init(&m_acceptor);
   ks_tcp_accept(&m_acceptor, &tcp_temp, conn_handler, &tcp_temp);
 }
 

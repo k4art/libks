@@ -7,10 +7,13 @@
 #ifndef KS_H
 #define KS_H
 
+#include <stdatomic.h>
 #include <stddef.h>
 
 #include "ks/ret.h"
 #include "ks/tcp.h"
+
+#define KS_STOP_IS_SIGNAL_SAFE (ATOMIC_BOOL_LOCK_FREE == 2)
 
 typedef enum
 {
@@ -65,12 +68,12 @@ typedef enum
   KS_RUN_POLL_ONCE,
 } ks_run_mode_t;
 
-typedef void (* ks_work_cb_t)(void * context);
+typedef void (*ks_work_cb_t)(void * context);
 
 typedef struct
 {
   ks_work_cb_t   fn;
-  void            * context;
+  void         * context;
 } ks_work_t;
 
 /**
@@ -131,6 +134,9 @@ void ks_close(void);
 
 void ks__post_work(ks_work_t work);
 void ks__post_io_work(ks_io_work_t work);
+
+void ks__increment_handles_count(void);
+void ks__decrement_handles_count(void);
 
 #endif
 

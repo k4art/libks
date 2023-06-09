@@ -27,8 +27,8 @@ typedef struct
  * @param[in]   res_
  * @param[in]   user_data_
  */
-#define KS_IO_WORK(fn_, res_, user_data_)                                      \
-  (ks_io_work_t) { .fn = fn_, .res = res_, .user_data = user_data_ }
+#define KS_IO_WORK(cb_, res_, user_data_) \
+  (ks_io_work_t) { .cb = cb_, .res = res_, .user_data = user_data_ }
 
 #endif
 

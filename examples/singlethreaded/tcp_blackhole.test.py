@@ -1,15 +1,16 @@
 import subprocess
 import time
 import socket
+import argparse
 
 
-def test():
-    proc = subprocess.Popen("test/tcp_blackhole")
+def test(args):
+    proc = subprocess.Popen([args.executable])
     time.sleep(1)
 
     s1 = socket.socket(socket.AF_INET)
     s1.connect(("127.0.0.1", 8080))
-    s1.sendall("Hello, this message is not supposed to affect anything")
+    s1.sendall(b"Hello, this message is not supposed to affect anything")
 
     s2 = socket.socket(socket.AF_INET)
     s2.connect(("127.0.0.1", 8080))
@@ -32,4 +33,7 @@ def test():
 
 
 if __name__ == "__main__":
-    test()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--executable', help='full path to executable')
+    args = parser.parse_args()
+    test(args)
