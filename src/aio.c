@@ -106,12 +106,6 @@ int ks_aio_poll(ks_aio_t * aio)
     }
 
     io_uring_cqe_seen(&aio->io_uring, cqe);
-
-  // ISSUE: ks_aio_poll() must return 1 if it handled one IO operation,
-  //        but operations like ks_tcp_read() work by issuing several IO ops.
-  //        In case of KS_AIO_POLL_CONTINUE, returning 0 will result in
-  //        that the worker is not aware it can proceed polling
-  //        without waiting. So this behavour should be documented.
     return 1;
   }
 

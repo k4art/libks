@@ -5,16 +5,6 @@
 #include "ks/ret.h"
 #include "macros.h"
 
-// ISSUE: io_uring supports multishot accept (since 5.19) and multishot recv
-//        (since 6.0), which potentially work better for ks_tcp_read() and
-//        (in potential future) multishot version of ks_tcp_accept().
-//
-//        See https://github.com/axboe/liburing/wiki/io_uring-and-networking-in-2023
-//
-//        Currently ks_tcp_read() that receives exact number of bytes works
-//        via registering subsequenct SQE in case of a partial read
-//        in the immediate callback.
-
 typedef struct
 {
   struct io_uring io_uring;
@@ -22,8 +12,8 @@ typedef struct
 
 typedef enum
 {
-  KS_AIO_OP_CODE_READ   = IORING_OP_RECV,
-  KS_AIO_OP_CODE_WRITE  = IORING_OP_SEND,
+  KS_AIO_OP_CODE_READ   = IORING_OP_READ,
+  KS_AIO_OP_CODE_WRITE  = IORING_OP_WRITE,
   KS_AIO_OP_CODE_ACCEPT = IORING_OP_ACCEPT,
 } ks_aio_op_code_t;
 

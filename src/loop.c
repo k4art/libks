@@ -5,6 +5,7 @@
 #include <sys/eventfd.h>
 
 #include "ks/alloc.h"
+#include "ks/log/thlog.h"
 #include "wq.h"
 #include "worker.h"
 
@@ -26,7 +27,7 @@ static ks__loop_t m_loop =
 
 static void ks__init(void)
 {
-  m_loop.eventfd = eventfd(0, EFD_SEMAPHORE);
+  m_loop.eventfd = eventfd(0, 0);
   ks_wq_init(&m_loop.wq, m_loop.eventfd);
 
   // Other struct fields defaults to 0 as needed.
@@ -82,7 +83,9 @@ static bool ks__has_active_handles(void)
 static void ks__wait_any_event(void)
 {
   eventfd_t evt_value;
+  thlog("wait start");
   eventfd_read(m_loop.eventfd, &evt_value);
+  thlog("wait end");
 
   (void) evt_value;
 }
@@ -104,6 +107,9 @@ int ks_run(ks_run_mode_t mode)
 
     ks__wait_any_event();
   }
+
+  eventfd_write(m_loop.eventfd, 1);  // ks_close() wakes up only one worker,
+                                     // to notify others eventfd_write() is repeated
 
   // Reached here if the loop is stopped.
   return 0;
@@ -148,13 +154,13 @@ void ks__post_io_work(ks_io_work_t io_work)
   });
 }
 
-void ks__increment_handles_count(void)
+void ks__inform_handle_init(void)
 {
   ks__ensure_worker_init();
   atomic_fetch_add_explicit(&m_loop.handles_count, 1, memory_order_relaxed);
 }
 
-void ks__decrement_handles_count(void)
+void ks__inform_handle_close(void)
 {
   ks__ensure_worker_init();
   atomic_fetch_sub_explicit(&m_loop.handles_count, 1, memory_order_release);

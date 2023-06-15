@@ -42,7 +42,7 @@ ks_ret_t ks__tcp_init(ks__tcp_t * tcp, int reuse_sockfd, const ks_ipv4_addr_t * 
   if (reuse_sockfd < 0)
     return KS_EINVAL;
 
-  if (reuse_sockfd == 0)
+  if (reuse_sockfd == KS__TCP_REUSE_SOCKFD)
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
   else
     sockfd = reuse_sockfd;
@@ -55,18 +55,19 @@ ks_ret_t ks__tcp_init(ks__tcp_t * tcp, int reuse_sockfd, const ks_ipv4_addr_t * 
 
   tcp->fd = sockfd;
   
-  ks__increment_handles_count();
+  ks__inform_handle_init();
   return KS_ESUCCESS;
 }
 
 ks_ret_t ks__tcp_close(ks__tcp_t * tcp)
 {
+  printf("close fd: %d\n", tcp->fd);
   if (!tcp)
     return KS_EINVAL;
 
   ks_ret_asserting(close(tcp->fd) == 0);
 
-  ks__decrement_handles_count();
+  ks__inform_handle_close();
   return KS_ESUCCESS;
 }
 

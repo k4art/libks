@@ -1,6 +1,7 @@
 #include <sys/eventfd.h>
 
 #include "ks/alloc.h"
+#include "ks/log/thlog.h"
 #include "wq.h"
 #include "macros.h"
 
@@ -124,7 +125,6 @@ void ks_wq_push(ks_wq_t * wq, const ks_wq_item_t * wq_item)
     }
   }
 
-  eventfd_write(wq->evt_fd, 1); // Works as cv.notify_one(), 1 is magic number,
-                                // any positive is suitable, though smaller is
-                                // preferred to avoid eventfd's count overflow.
+  thlog("notify");
+  KS_RET_CHECKED(eventfd_write(wq->evt_fd, 1));
 }

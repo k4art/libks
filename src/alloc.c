@@ -22,7 +22,7 @@ void * ks_malloc(size_t size)
 
   if (!ptr)
   {
-    ks__error("bad malloc");
+    ks_error("bad malloc");
     abort();
   }
 
