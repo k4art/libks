@@ -7,7 +7,7 @@
 #include "ks.h"
 
 #define RX_BUFFER_SIZE 512
-#define WORKERS_NUMBER 1
+#define WORKERS_NUMBER 2
 
 typedef struct
 {
