@@ -8,27 +8,16 @@
 
 #include "ks.h"
 
-#define CHECKED(expr)                                              \
-  do {                                                             \
-   int ret = (expr);                                               \
-   if (ret != 0)                                                   \
-   {                                                               \
-     fprintf(stderr,                                               \
-            "CHECKED(%s) failed with %s\n", #expr, strerror(ret)); \
-     abort();                                                      \
-   }                                                               \
- } while (0)                                                       \
-
 #define WAIT_SIGNAL(signum_)                                       \
   do {                                                             \
-    sigset_t    signal_set;                                        \
-    int         signum;                                            \
+    sigset_t signal_set;                                           \
+    int      signum;                                               \
     sigemptyset(&signal_set);                                      \
     sigaddset(&signal_set, signum_);                               \
-    CHECKED(pthread_sigmask(SIG_BLOCK, &signal_set, NULL));        \
+    KS_RET_CHECKED(pthread_sigmask(SIG_BLOCK, &signal_set, NULL)); \
     sigwait(&signal_set, &signum);                                 \
     assert(signum == signum_);                                     \
-  } while (0)                                                      \
+  } while (0)
 
 static ks_tcp_acceptor_t m_acceptor;
 
@@ -96,7 +85,6 @@ static void async_execute_command(char * command, user_conn_t * conn)
 
 static void on_read_cb(int read_res, void * user_data)
 {
-  printf("on_read_cb()\n");
   user_conn_t * conn = user_data;
 
   if (read_res <= 0)
@@ -112,7 +100,6 @@ static void on_read_cb(int read_res, void * user_data)
 
 static void handle_connection(user_conn_t * conn)
 {
-  printf("handle_connection()\n");
   ks_tcp_read(&conn->tcp, conn->rx_buffer, COMMAND_FIX_SIZE, on_read_cb, conn);
 }
 
@@ -123,7 +110,7 @@ static void on_accept_cb(int result, void * user_data)
 
   if (result < 0)
   {
-    fprintf(stderr, "Error: async accept failed with %s\n", ks_ret_name(result));
+    ks_error("Error: async accept failed with %s", ks_ret_name(result));
   }
   else
   {
@@ -153,7 +140,7 @@ static void launch_server(void * user_data)
 
 static void * worker_routine(void * context)
 {
-  while (ks_run(KS_RUN_ONCE) == 1)
+  while (ks_run(KS_RUN_ONCE))
     ;
 
   ks_close();

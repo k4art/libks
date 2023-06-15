@@ -7,6 +7,7 @@ set(TEST_CASES
     singlethreaded/tcp_ping_pong_server
 
     multithreaded/async_sort
+    multithreaded/tcp_echo_server
 )
 
 foreach(TEST_CASE ${TEST_CASES})

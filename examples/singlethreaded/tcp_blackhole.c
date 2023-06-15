@@ -6,10 +6,10 @@
 typedef struct
 {
   ks_tcp_conn_t tcp;
-} user_conn_t;
+} app_conn_t;
 
 static char                m_blackhole[1028];
-static user_conn_t       * m_conns[2048];     // maps: FD -> user_conn_t *
+static app_conn_t       * m_conns[2048];     // maps: FD -> user_conn_t *
 static ks_tcp_acceptor_t * m_acceptor;
 
 static void spaghettify_cb(int res, void * user_data);
@@ -17,19 +17,19 @@ static void past_event_horizon_cb(int accept_res, void * user_data);
 
 static void accept_conn(ks_tcp_acceptor_t * acceptor, ks_io_cb_t cb)
 {
-  user_conn_t * conn = malloc(sizeof(user_conn_t));
+  app_conn_t * conn = malloc(sizeof(app_conn_t));
   
   ks_tcp_accept(acceptor, &conn->tcp, cb, conn);
 }
 
-static void spaghettify(user_conn_t * conn)
+static void spaghettify(app_conn_t * conn)
 {
   ks_tcp_read_some(&conn->tcp, m_blackhole, sizeof(m_blackhole), spaghettify_cb, conn);
 }
 
 static void spaghettify_cb(int res, void * user_data)
 {
-  user_conn_t * conn = user_data;
+  app_conn_t * conn = user_data;
 
   if (res <= 0)
   {
@@ -45,7 +45,7 @@ static void spaghettify_cb(int res, void * user_data)
 
 static void past_event_horizon_cb(int accept_res, void * user_data)
 {
-  user_conn_t * conn = user_data;
+  app_conn_t * conn = user_data;
   
   if (accept_res == 0)
   {
@@ -88,7 +88,7 @@ int main(void)
 
   signal(SIGINT, ctrl_c_handler);   // ctrl_c_handler calls ks_stop(),
                                     // this will stop the loop
-  while (ks_run(KS_RUN_ONCE) == 1)
+  while (ks_run(KS_RUN_ONCE))
     ;
 
   cleanup_conns();                  // after that release all resources

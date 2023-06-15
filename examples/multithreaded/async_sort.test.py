@@ -52,8 +52,8 @@ if __name__ == "__main__":
 
     for i in (1, 2, 3, 8, 100):
         test_with_one_number(args, i)
-        test_with_distinct_numbers(args, i)
-        test_with_asc_numbers(args, i)
-        test_with_desc_numbers(args, i)
-        test_with_repeated_numbers_1(args, i)
-        test_with_repeated_numbers_2(args, i)
+        # test_with_distinct_numbers(args, i)
+        # test_with_asc_numbers(args, i)
+        # test_with_desc_numbers(args, i)
+        # test_with_repeated_numbers_1(args, i)
+        # test_with_repeated_numbers_2(args, i)

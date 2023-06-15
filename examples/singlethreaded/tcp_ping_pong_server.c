@@ -99,7 +99,7 @@ static void on_accept_cb(int result, void * user_data)
 {
   if (result < 0)
   {
-    fprintf(stderr, "Error: async accept failed with %s\n", strerror(errno));
+    ks_error( "Error: async accept failed with %s", strerror(errno));
   }
   else
   {
@@ -147,7 +147,7 @@ int main(void)
 
   signal(SIGINT, ctrl_c_handler);
 
-  while (ks_run(KS_RUN_ONCE) == 1)
+  while (ks_run(KS_RUN_ONCE))
     ;
 
   cleanup_conns();

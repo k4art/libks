@@ -1,10 +1,22 @@
 #include <stdio.h>
 #include <stdatomic.h>
 #include <pthread.h>
+#include <threads.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "ks/log/thlog.h"
 #include "ks.h"
+
+#define NS_PER_MS  (1000 * 1000)
+#define MS_PER_SEC (1000)
+
+/*
+ * Used to measure wall-clock execution time,
+ * but without time taken by initialization and destruction
+ * of worker-threads.
+ */
+static struct timespec start, finish;
 
 typedef struct
 {
@@ -14,7 +26,7 @@ typedef struct
 
 static void * worker_routine(void * context)
 {
-  while (ks_run(KS_RUN_ONCE_OR_DONE) == 1)
+  while (ks_run(KS_RUN_ONCE))
     ;
 
   ks_close();
@@ -30,6 +42,22 @@ typedef struct
   long         * ending;
 } sorting_ctx_t;
 
+static void insertion_sort(long * beg, long * end)
+{
+  for (long * i = beg; i != end; i++)
+  {
+    long temp = *i;
+
+    while (i > beg && temp < *(i - 1))
+    {
+      *i = *(i - 1);
+      i--;
+    }
+
+    *i = temp;
+  }
+}
+
 static void async_quicksort_recurse(void * context)
 {
   /* SAFETY:
@@ -42,8 +70,10 @@ static void async_quicksort_recurse(void * context)
   long * beg_left = ctx->beginning;
   long * end_left = ctx->ending;
 
-  while (end_left - beg_left > 1)
+  static thread_local size_t i = 0;
+  while (end_left - beg_left > 128)
   {
+    thlog("BEG (%zu) %p {%zu}", i, beg_left, end_left - beg_left);
     long   pivot = *beg_left;
     long * sep   = beg_left + 1;
 
@@ -84,7 +114,12 @@ static void async_quicksort_recurse(void * context)
 
     // Continue sorting left part on the same stack frame
     // avoiding extra recursive calls and heap allocations.
+
+    thlog("END (%zu)", i);
+    i++;
   }
+
+  insertion_sort(beg_left, end_left);
 
   if (atomic_fetch_sub_explicit(ctx->async_left, 1, memory_order_acq_rel) == 1)
   {
@@ -108,13 +143,15 @@ static void async_sort(longs_t * array, ks_work_cb_t cb, void * user_data)
   ctx->beginning  = array->data;
   ctx->ending     = array->data + array->size;
   
+  clock_gettime(CLOCK_MONOTONIC, &start);
+  thlog("start");
   ks_post(KS_WORK(async_quicksort_recurse, ctx));
 }
 
 static void input_array(longs_t ** p_array)
 {
   longs_t * temp;
-  ssize_t     no_elems_in;
+  ssize_t   no_elems_in;
 
   fflush(stdout);
   KS_RET_CHECKED(scanf("%zd", &no_elems_in));
@@ -140,6 +177,14 @@ static void input_array(longs_t ** p_array)
 static void output_and_free_array_cb(void * user_data)
 {
   longs_t * array = user_data;
+  unsigned long wall_time_ms;
+
+  clock_gettime(CLOCK_MONOTONIC, &finish);
+  printf("S: %lu %lu\n", start.tv_sec, start.tv_nsec);
+  printf("F: %lu %lu\n", finish.tv_sec, finish.tv_nsec);
+
+  wall_time_ms = (finish.tv_sec - start.tv_sec) * MS_PER_SEC;
+  wall_time_ms += (finish.tv_nsec - start.tv_nsec) / NS_PER_MS;
 
   for (size_t i = 0; i < array->size; i++)
   {
@@ -148,8 +193,10 @@ static void output_and_free_array_cb(void * user_data)
     printf("%ld", array->data[i]);
   }
 
-  printf("\n");
+  printf("\nwall time: %lums\n", wall_time_ms);
   free(array);
+
+  ks_stop();
 }
 
 int main(int argc, char ** argv)
@@ -164,14 +211,14 @@ int main(int argc, char ** argv)
   pthread_t * threads    = malloc(threads_no * sizeof(pthread_t));
 
   longs_t * array;
-  
-  input_array(&array);
-  async_sort(array, output_and_free_array_cb, array);
 
   for (size_t i = 0; i < threads_no; i++)
   {
     pthread_create(&threads[i], NULL, worker_routine, NULL);
   }
+  
+  input_array(&array);
+  async_sort(array, output_and_free_array_cb, array);
  
   for (size_t i = 0; i < threads_no; i++)
   {
@@ -180,4 +227,3 @@ int main(int argc, char ** argv)
 
   free(threads);
 }
-

@@ -15,10 +15,9 @@ static void done_io_cb(int result, void * user_data)
 
   if (result != strlen(HELLO_MESSAGE))
   {
-    fprintf(stderr,
-            "Error: message sent was impaired (%d out of %zu)\n",
-            result,
-            strlen(HELLO_MESSAGE));
+    ks_error("Error: message sent was impaired (%d out of %zu)",
+             result,
+             strlen(HELLO_MESSAGE));
 
     exit(1);
   }
@@ -33,7 +32,7 @@ static void say_hello_io_cb(int result, void * user_data)
 
   if (result < 0)
   {
-    fprintf(stderr, "Error: async accept failed with %s\n", strerror(errno));
+    ks_error("Error: async accept failed with %s", strerror(errno));
     exit(1);
   }
 
@@ -56,7 +55,7 @@ int main(void)
                                say_hello_io_cb,
                                &single_conn));
 
-  while (ks_run(KS_RUN_ONCE_OR_DONE) == 1)
+  while (ks_run(KS_RUN_ONCE_OR_DONE))
     ;
 
   ks_close();
