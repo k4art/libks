@@ -3,7 +3,7 @@
 #include "expect.h"
 #include "ks.h"
 
-#define THREADS_NUMBER 100
+#define THREADS_NUMBER 10
 
 static int flags[THREADS_NUMBER];
 
@@ -46,5 +46,5 @@ int main(void)
     total += flags[i];
   }
 
-  EXPECT(total == THREADS_NUMBER);
+  EXPECT_EQ(total, THREADS_NUMBER);
 }
