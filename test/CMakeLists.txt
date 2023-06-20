@@ -1,6 +1,8 @@
 set(TEST_CASES
     ipv4
     loop_run_empty
+    wq_fifo
+    wq_pushes_batches_to_global
     loop_run_works-single
     loop_run_works-multi
 )
