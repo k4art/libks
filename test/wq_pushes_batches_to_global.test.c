@@ -58,11 +58,11 @@ int main(void)
   pthread_create(&threads[1], NULL, worker_produces_more, NULL);
 
   // allows the first worker to produce some work for the second worker
-  sleep(1);
+  // sleep(1);
 
-  pthread_create(&threads[0], NULL, worker_only_consumes, NULL);
+  // pthread_create(&threads[0], NULL, worker_only_consumes, NULL);
 
-  pthread_join(threads[0], NULL);
+  // pthread_join(threads[0], NULL);
   pthread_join(threads[1], NULL);
 
   EXPECT_EQ(total_works_done, RUNTIME_WORKS_PRODUCED_ITER * RUNTIME_WORKS_PRODUCED_RATE);

@@ -13,14 +13,15 @@ int  thlog__tid(void);
 
 #ifdef KS_THLOG_ENABLE
 
-#define thlog(format, ...)                                                        \
-  do {                                                                            \
-    if (!thlog__is_init())                                                        \
-      thlog__init();                                                              \
-                                                                                  \
-    struct timespec t;                                                            \
-    clock_gettime(CLOCK_MONOTONIC, &t);                                           \
-    thlog__log("[%d] %lu: " format "\n", thlog__tid(), t.tv_nsec, ##__VA_ARGS__); \
+#define thlog(format, ...)                                                     \
+  do {                                                                         \
+    if (!thlog__is_init())                                                     \
+      thlog__init();                                                           \
+                                                                               \
+    struct timespec t;                                                         \
+    clock_gettime(CLOCK_MONOTONIC, &t);                                        \
+    thlog__log("[%d] %lu %lu: " format "\n", thlog__tid(), t.tv_sec,           \
+               t.tv_nsec, ##__VA_ARGS__);                                      \
   } while (0)
 
 #else

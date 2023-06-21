@@ -1,10 +1,8 @@
 #include <string.h>
 #include <assert.h>
 
-#include "idles.h"
-#include "macros.h"
-
-#include "ks/log/thlog.h"
+#include "etc/macros.h"
+#include "async/idles.h"
 
 void ks_idles_init(ks_idles_t * idles)
 {
@@ -91,7 +89,6 @@ void ks_idles_wakeup(ks_idles_t * idles)
 {
   assert(idles);
 
-  thlog("wakeup");
   int evtfd = ks_idles_pop(idles);
 
   if (evtfd > 0)

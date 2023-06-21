@@ -3,7 +3,6 @@
 #include <unistd.h>
 
 #include "ks/alloc.h"
-#include "ks/log/thlog.h"
 #include "ks.h"
 
 #define RX_BUFFER_SIZE 512
@@ -35,12 +34,10 @@ static void app_echo_repeat(int res, void * user_data);
 
 static void app_echo_listen(int res, void * user_data)
 {
-  printf("listen: res = %d\n", res);
   app_conn_t * conn = user_data;
 
   if (ks_ret_is_err(res))
   {
-    printf("conn destroy by listen\n");
     app_conn_destroy(conn);
     return;
   }
@@ -50,12 +47,10 @@ static void app_echo_listen(int res, void * user_data)
 
 static void app_echo_repeat(int res, void * user_data)
 {
-  printf("repeat: res = %d\n", res);
   app_conn_t * conn = user_data;
 
   if (ks_ret_is_err(res) || res == 0)
   {
-    printf("conn destroy by repeat: %d\n", res);
     app_conn_destroy(conn);
     return;
   }
@@ -65,7 +60,6 @@ static void app_echo_repeat(int res, void * user_data)
 
 static void app_echo_accept(int res, void * user_data)
 {
-  printf("accept: res = %d\n", res);
   ks_tcp_conn_t * tcp_temp = user_data;
 
   if (!ks_ret_is_err(res))
@@ -81,7 +75,6 @@ static void app_echo_accept(int res, void * user_data)
 
 static void launch_server(void * user_data)
 {
-  printf("launch\n");
   static ks_tcp_conn_t tcp_temp;
   ks_io_cb_t on_conn = user_data;
 

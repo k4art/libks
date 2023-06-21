@@ -4,13 +4,13 @@
 #include <stdatomic.h>
 #include <sys/eventfd.h>
 
-#include "idles.h"
-#include "ks/log/thlog.h"
-#include "ks/alloc.h"
-#include "worker.h"
-#include "shared.h"
+#include "async/idles.h"
+#include "async/shared.h"
+#include "async/worker.h"
 
+#include "ks/alloc.h"
 #include "ks.h"
+
 #include "../test/expect.h"
 
 typedef struct
@@ -30,14 +30,14 @@ static ks__loop_t m_loop =
 static void ks__init(void)
 {
   ks_idles_init(&m_loop.shared.idles);
-  ks_wq_global_init(&m_loop.shared.wq_global, &m_loop.shared.idles);
+  ks_q_global_init(&m_loop.shared.q_global);
 
   // Other struct fields default to 0 as needed.
 }
 
 static void ks__close(void)
 {
-  ks_wq_global_close(&m_loop.shared.wq_global);
+  ks_q_global_close(&m_loop.shared.q_global);
   ks_idles_close(&m_loop.shared.idles);
 }
 
@@ -52,6 +52,7 @@ void ks_close(void)
   assert(ks_worker_is_init());
 
   ks_worker_close();
+
   unsigned count = atomic_fetch_sub_explicit(&m_loop.workers_running,
                                              1,
                                              memory_order_release);
@@ -71,7 +72,7 @@ static void ks__ensure_worker_init(void)
   {
     ks__ensure_init();
     ks_worker_init(&m_loop.shared);
-    // atomic_fetch_add_explicit(&m_loop.workers_running, 1, memory_order_relaxed);
+    atomic_fetch_add_explicit(&m_loop.workers_running, 1, memory_order_relaxed);
   }
 }
 
@@ -115,31 +116,31 @@ int ks_run(ks_run_mode_t mode)
   return 0;
 }
 
-static void ks__work_wq_cb_wrapper(ks_wq_item_t * wq_item)
+static void ks__work_wq_cb_wrapper(ks_task_t * task)
 {
-  ks_work_cb_t user_cb = wq_item->user_cb;
+  ks_work_cb_t user_cb = task->user_cb;
 
-  user_cb(wq_item->user_data);
+  user_cb(task->user_data);
 }
 
-void ks__post_wq_item(const ks_wq_item_t * wq_item)
+void ks__post_task(const ks_task_t * task)
 {
   ks__ensure_init();
 
   if (ks_worker_is_init())
   {
-    ks_worker_post(wq_item);
+    ks_worker_post(task);
   }
   else
   {
-    ks_wq_global_push(&m_loop.shared.wq_global, wq_item);
+    ks_q_global_push_single(&m_loop.shared.q_global, task);
     ks_idles_wakeup(&m_loop.shared.idles);
   }
 }
 
 void ks__post_work(ks_work_t work)
 {
-  ks__post_wq_item(&(ks_wq_item_t) 
+  ks__post_task(&(ks_task_t) 
   {
     .cb_wrapper = ks__work_wq_cb_wrapper,
     .user_cb    = work.fn,
@@ -147,16 +148,16 @@ void ks__post_work(ks_work_t work)
   });
 }
 
-static void ks__io_work_wq_cb_wrapper(ks_wq_item_t * wq_item)
+static void ks__io_work_wq_cb_wrapper(ks_task_t * task)
 {
-  ks_io_cb_t user_cb = wq_item->user_cb;
+  ks_io_cb_t user_cb = task->user_cb;
 
-  user_cb(wq_item->io_res, wq_item->user_data);
+  user_cb(task->io_res, task->user_data);
 }
 
 void ks__post_io_work(ks_io_work_t io_work)
 {
-  ks__post_wq_item(&(ks_wq_item_t)
+  ks__post_task(&(ks_task_t)
   {
     .cb_wrapper = ks__io_work_wq_cb_wrapper,
     .io_res     = io_work.res,
@@ -174,6 +175,7 @@ void ks__inform_handle_init(void)
 void ks__inform_handle_close(void)
 {
   ks__ensure_worker_init();
+
   unsigned handles = atomic_fetch_sub_explicit(&m_loop.handles_count,
                                                1,
                                                memory_order_acq_rel);

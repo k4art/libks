@@ -8,6 +8,7 @@ set(TEST_CASES
 
     multithreaded/async_sort
     multithreaded/tcp_echo_server
+    multithreaded/http_hello_world
 )
 
 foreach(TEST_CASE ${TEST_CASES})

@@ -1,7 +1,8 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "worker.h"
+#include "async/worker.h"
+
 #include "ks.h"
 #include "ks/alloc.h"
 #include "ks/tcp.h"
@@ -61,7 +62,6 @@ ks_ret_t ks__tcp_init(ks__tcp_t * tcp, int reuse_sockfd, const ks_ipv4_addr_t * 
 
 ks_ret_t ks__tcp_close(ks__tcp_t * tcp)
 {
-  printf("close fd: %d\n", tcp->fd);
   if (!tcp)
     return KS_EINVAL;
 
@@ -142,8 +142,8 @@ typedef struct
 KS_AIO_STATIC_ASSERT_EXTENDED_POLLING_TYPE(ks__tcp_rw_polling_t);
 
 static ks_aio_poll_res_t ks__tcp_rw_poll(ks_aio_polling_base_t * self,
-                                           int                   res,
-                                           ks_aio_op_t         * p_op)
+                                         int                     res,
+                                         ks_aio_op_t           * p_op)
 {
   assert(self);
   assert(p_op);

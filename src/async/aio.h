@@ -1,9 +1,9 @@
 #include <liburing.h>
 #include <string.h>
 
+#include "etc/macros.h"
 #include "ks/io.h"
 #include "ks/ret.h"
-#include "macros.h"
 
 typedef struct
 {

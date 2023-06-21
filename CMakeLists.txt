@@ -14,6 +14,7 @@ add_subdirectory(test)
 add_subdirectory(examples)
 
 include_directories(include)
+include_directories(src)
 
 file(GLOB_RECURSE SOURCES LIST_DIRECTORIES true include/*.h src/*.c)
 

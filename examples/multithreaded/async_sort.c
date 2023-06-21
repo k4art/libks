@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ks/log/thlog.h"
 #include "ks.h"
 
 #define NS_PER_MS  (1000 * 1000)
@@ -73,7 +72,6 @@ static void async_quicksort_recurse(void * context)
   static thread_local size_t i = 0;
   while (end_left - beg_left > 128)
   {
-    thlog("BEG (%zu) %p {%zu}", i, beg_left, end_left - beg_left);
     long   pivot = *beg_left;
     long * sep   = beg_left + 1;
 
@@ -115,7 +113,6 @@ static void async_quicksort_recurse(void * context)
     // Continue sorting left part on the same stack frame
     // avoiding extra recursive calls and heap allocations.
 
-    thlog("END (%zu)", i);
     i++;
   }
 

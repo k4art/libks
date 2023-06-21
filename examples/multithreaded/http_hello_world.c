@@ -52,14 +52,16 @@ static void * worker_routine(void * context);
 static void app_http_close(int res, void * user_data)
 {
 	app_conn_t * conn = user_data;
-  int fd = conn->tcp.socket.fd;
+  thlog("close %d", conn->tcp.socket.fd);
+
 	app_conn_destroy(conn);
-  thlog("closed %d", fd);
 }
 
 static void app_http_send_hello(int res, void * user_data)
 {
 	app_conn_t * conn = user_data;
+
+  thlog("write %d", conn->tcp.socket.fd);
 
   if (ks_ret_is_err(res))
   {
@@ -78,6 +80,8 @@ static void app_http_read_request(void * user_data)
 {
   app_conn_t * conn = user_data;
 
+  thlog("read %d", conn->tcp.socket.fd);
+
   ks_tcp_read_some(&conn->tcp,
                    conn->rx_buffer,
                    RX_BUFFER_SIZE,
@@ -87,7 +91,8 @@ static void app_http_read_request(void * user_data)
 
 static void app_accept(int res, void * user_data)
 {
-  thlog("accept recevied %d", res);
+  thlog("accept received %d", res);
+
   ks_tcp_conn_t * tcp_temp = user_data;
 
   ks_tcp_accept(&m_acceptor, tcp_temp, app_accept, tcp_temp);
