@@ -7,7 +7,7 @@
 #include "async/queues/global.h"
 #include "async/task.h"
 
-#define KS_Q_LOCAL_CAPACITY 4
+#define KS_Q_LOCAL_CAPACITY 16
 
 typedef struct
 {
