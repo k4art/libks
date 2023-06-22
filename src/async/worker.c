@@ -11,16 +11,11 @@
 
 #include "../test/expect.h"
 
-typedef enum
-{
-  KS__IOWQ,
-  KS__WQ,
-} ks__queue_symbol_t;
+#define AIO_POLLS_MAX 16
 
 typedef struct
 {
   ks_shared_t        * shared;
-  ks__queue_symbol_t   last_queue_polled;
   int                  eventfd;
   size_t               active_handles;
   ks_aio_t             aio;
@@ -85,22 +80,16 @@ int ks_worker_poll(void)
 
   ks__worker_ctx_t * ctx = &m_ctx_tss;
 
-  switch (ctx->last_queue_polled)
-  {
-    case KS__IOWQ:
-      ctx->last_queue_polled = KS__WQ;
+  int ret = 0;
+  int aio_polls_left = AIO_POLLS_MAX;
 
-      if (ks__worker_wq_poll()) return 1;
-      if (ks_aio_poll(&ctx->aio)) return 1;
-      return 0;
+  while (ks_aio_poll(&ctx->aio) && --aio_polls_left > 0)
+    ret = 1;
 
-    case KS__WQ: 
-      ctx->last_queue_polled = KS__IOWQ;
+  if (ks__worker_wq_poll())
+    ret = 1;
 
-      if (ks_aio_poll(&ctx->aio)) return 1;
-      if (ks__worker_wq_poll()) return 1;
-      return 0;
-  }
+  return ret;
 }
 
 ks_ret_t ks_worker_aio_request(const ks_aio_op_t           * op,
