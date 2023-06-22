@@ -57,12 +57,14 @@ static void ks_q_local_push(ks_q_local_t    * q_local,
 static void ks_q_local_share(ks_q_local_t  * q_local,
                              ks_q_global_t * q_global)
 {
-  size_t head = q_local->head & INDEX_MASK;
-  size_t tail = (q_local->tail - 1) & INDEX_MASK; // TODO: refactor
-  size_t midl = ((q_local->tail + q_local->head) / 2) & INDEX_MASK;
+  size_t middle = (q_local->tail + q_local->head) / 2;
+  size_t share_len = middle;
 
-  ks_task_t * first = &q_local->cqueue[midl];  /* first to share */
-  ks_task_t * last  = &q_local->cqueue[tail];  /* last to share */
+  size_t start_idx = middle & INDEX_MASK;
+  size_t last_idx  = (q_local->tail - 1) & INDEX_MASK;
+
+  ks_task_t * first = &q_local->cqueue[start_idx];  /* first to share */
+  ks_task_t * last  = &q_local->cqueue[last_idx];   /* last to share */
 
   ks_tasks_batch_t * batch = NULL;
   ks_tasks_batch_create(&batch, (q_local->tail - q_local->head) / 2);

@@ -44,7 +44,7 @@ static void ks__close(void)
 void ks_stop(void)
 {
   atomic_store(&m_loop.is_stopped, true);
-  ks_idles_wakeup_all(&m_loop.shared.idles);
+  ks_idles_wakeup_all_and_stop(&m_loop.shared.idles);
 }
 
 void ks_close(void)
@@ -57,7 +57,7 @@ void ks_close(void)
                                              1,
                                              memory_order_release);
 
-  if (count == 1)
+  if (count == 1)  // the last worker closes the loop
     ks__close();
 }
 
@@ -188,4 +188,3 @@ void ks__inform_handle_close(void)
     ks_idles_wakeup(&m_loop.shared.idles);
   }
 }
-

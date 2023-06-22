@@ -19,7 +19,7 @@ typedef struct
 void ks_idles_init(ks_idles_t * idles);
 void ks_idles_close(ks_idles_t * idles);
 
-void ks_idles_wakeup_all(ks_idles_t * idles);
+void ks_idles_wakeup_all_and_stop(ks_idles_t * idles);
 void ks_idles_wakeup(ks_idles_t * idles);
 void ks_idles_sleep(ks_idles_t * idles, int evtfd);
 
