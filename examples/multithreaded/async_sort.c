@@ -7,16 +7,6 @@
 
 #include "ks.h"
 
-#define NS_PER_MS  (1000 * 1000)
-#define MS_PER_SEC (1000)
-
-/*
- * Used to measure wall-clock execution time,
- * but without time taken by initialization and destruction
- * of worker-threads.
- */
-static struct timespec start, finish;
-
 typedef struct
 {
   size_t size;
@@ -140,8 +130,6 @@ static void async_sort(longs_t * array, ks_work_cb_t cb, void * user_data)
   ctx->beginning  = array->data;
   ctx->ending     = array->data + array->size;
   
-  clock_gettime(CLOCK_MONOTONIC, &start);
-  thlog("start");
   ks_post(KS_WORK(async_quicksort_recurse, ctx));
 }
 
@@ -174,14 +162,6 @@ static void input_array(longs_t ** p_array)
 static void output_and_free_array_cb(void * user_data)
 {
   longs_t * array = user_data;
-  unsigned long wall_time_ms;
-
-  clock_gettime(CLOCK_MONOTONIC, &finish);
-  printf("S: %lu %lu\n", start.tv_sec, start.tv_nsec);
-  printf("F: %lu %lu\n", finish.tv_sec, finish.tv_nsec);
-
-  wall_time_ms = (finish.tv_sec - start.tv_sec) * MS_PER_SEC;
-  wall_time_ms += (finish.tv_nsec - start.tv_nsec) / NS_PER_MS;
 
   for (size_t i = 0; i < array->size; i++)
   {
@@ -190,7 +170,7 @@ static void output_and_free_array_cb(void * user_data)
     printf("%ld", array->data[i]);
   }
 
-  printf("\nwall time: %lums\n", wall_time_ms);
+  printf("\n");
   free(array);
 
   ks_stop();
