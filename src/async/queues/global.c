@@ -33,7 +33,7 @@ void ks_q_global_push_single(ks_q_global_t * q_global, const ks_task_t * task)
   assert(q_global);
   assert(task);
 
-  // This logic mostly exists because of `ks_post()` calls
+  // This logic exists mostly because of `ks_post()` calls
   // from non-worker threads.
 
   ks_tasks_batch_t * batch = NULL;

@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "async/queues/batch.h"
+#include "etc/macros.h"
 
 #include "ks/alloc.h"
 #include "ks/ret.h"
@@ -40,12 +41,8 @@ size_t ks_tasks_batch_fill(ks_tasks_batch_t * batch,
   assert(from <= last);
 
   ks_task_t * insert_point = &batch->tasks[batch->length];
-  size_t n = last - from + 1;
-
-  if (n > batch->capacity - batch->length)
-  {
-    n = batch->capacity - batch->length;
-  }
+  size_t max = batch->capacity - batch->length;
+  size_t n = KS_MIN(last - from + 1, max);
   
   memcpy(insert_point, from, n * sizeof(ks_task_t));
   batch->length += n;

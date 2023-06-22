@@ -31,3 +31,10 @@
 #define KS_STATIC_ASSERT_TYPE_CONST(expr_, type_)                           \
   static_assert(_Generic((expr_), const type_ : 1, type_ : 1, default : 0), \
                 "Expression (" #expr_ ") is expected to be of type " #type_)
+
+#define KS_MIN(a, b)                                             \
+  ({                                                             \
+    __typeof__(a) a_val = (a);                                   \
+    __typeof__(b) b_val = (b);                                   \
+    a_val < b_val ? a_val : b_val;                               \
+  })

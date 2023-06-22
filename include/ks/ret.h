@@ -27,13 +27,13 @@
     ks_ret_t ret = (expr);                             \
     if (ret < 0)                                       \
     {                                                  \
-      ks_error("KS_RET_CHECK() failure at %s:%s:%d\n" \
-               "`%s` returned error: %s",             \
-               __FILE__,                              \
-               __FUNCTION__,                          \
-               __LINE__,                              \
-               #expr,                                 \
-               ks_ret_name(ret));                     \
+      ks_error("KS_RET_CHECK() failure at %s:%s:%d\n"  \
+               "`%s` returned error: %s",              \
+               __FILE__,                               \
+               __FUNCTION__,                           \
+               __LINE__,                               \
+               #expr,                                  \
+               ks_ret_name(ret));                      \
       abort();                                         \
     }                                                  \
   } while (0)
@@ -45,8 +45,8 @@
     ks_ret_t ret = (expr);                         \
     if (ret < 0)                                   \
     {                                              \
-      ks_error("KS_RET_CHECK() failed error: %s", \
-               ks_ret_name(ret));                 \
+      ks_error("KS_RET_CHECK() failed error: %s",  \
+               ks_ret_name(ret));                  \
       abort();                                     \
     }                                              \
   } while (0)
