@@ -1,12 +1,24 @@
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "ks/alloc.h"
 #include "ks.h"
 
 #define RX_BUFFER_SIZE 512
 #define WORKERS_NUMBER 2
+
+#define WAIT_SIGNAL(signum_)                                       \
+  do {                                                             \
+    sigset_t signal_set;                                           \
+    int      signum;                                               \
+    sigemptyset(&signal_set);                                      \
+    sigaddset(&signal_set, signum_);                               \
+    KS_RET_CHECKED(pthread_sigmask(SIG_BLOCK, &signal_set, NULL)); \
+    sigwait(&signal_set, &signum);                                 \
+    assert(signum == signum_);                                     \
+  } while (0)
 
 typedef struct
 {
@@ -78,6 +90,7 @@ static void launch_server(void * user_data)
   static ks_tcp_conn_t tcp_temp;
   ks_io_cb_t on_conn = user_data;
 
+  ks_tcp_init(&m_acceptor);
   ks_tcp_accept(&m_acceptor, &tcp_temp, on_conn, &tcp_temp);
 }
 
@@ -90,6 +103,9 @@ static void runtime(void)
     pthread_create(&threads[i], NULL, worker_routine, NULL);
   }
 
+  WAIT_SIGNAL(SIGINT);
+  ks_stop();
+
   for (size_t i = 0; i < WORKERS_NUMBER; i++)
   {
     pthread_join(threads[i], NULL);
@@ -100,11 +116,10 @@ int main(void)
 {
   m_acceptor = (ks_tcp_acceptor_t)
   {
-    .addr.ip   = KS_IPv4(0, 0, 0, 0),
+    .addr.ip   = KS_IPv4(127, 0, 0, 1),
     .addr.port = 8080,
   };
 
-  ks_tcp_init(&m_acceptor);
   ks_post(KS_WORK(launch_server, app_echo_accept));
 
   runtime();
